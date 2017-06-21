@@ -19,7 +19,10 @@
     
     <!-- Latest compiled and minified JavaScript -->
     <script src="bootstrap-3.3.7-dist/js/bootstrap.min.js"></script>
-		  
+
+    <!-- Sepa Discover -->
+    <script type="text/javascript" src="sepadiscover.js"></script>
+    
   </head>
 
   <body>
@@ -38,8 +41,7 @@
         <div id="navbar" class="collapse navbar-collapse">
           <ul class="nav navbar-nav">
             <li class="active"><a href="#">Home</a></li>
-            <li><a href="#about">About</a></li>
-            <li><a href="#contact">Contact</a></li>
+            <li><a href="about.html">About</a></li>
           </ul>
         </div><!--/.nav-collapse -->
       </div>
@@ -54,45 +56,35 @@
 
 
     <!-- RESULTS -->
-    <div class="panel panel-default">
-      <div class="panel-heading">
-	SEPA Connection Parameters
-      </div>
-      <div class="container">
-	<br>
-      <form class="form-inline">
-	<div class="form-group">
-	  <label for="sepaQueryURLlabel">SEPA Update/Query URL</label>
-	  <input type="string" class="form-control" id="sepaQueryURLinput" placeholder="http://localhost:8000/sparql">
-	</div>
-	<div class="form-group">
-	  <label for="sepaSubscribeURLlabel">SEPA Subscribe URL</label>
-	  <input type="string" class="form-control" id="sepaSubscribeURLinput" placeholder="ws://localhost:9000/sparql">
-	</div>
-	<button type="connectButton" class="btn btn-default">Connect</button>
-      </form>
-      </div>
-      <br>
+    <div class="input-group">
+      <span class="input-group-addon" id="queryURI">Update/Query URI</span>
+      <input type="text" class="form-control" placeholder="http://192.168.1.100:8000/sparql" aria-describedby="basic-addon1" id="queryURI">
     </div>
+    <br>
+    <div class="input-group">
+      <input type="text" class="form-control" placeholder="ws://192.168.1.100:9000/sparql" aria-describedby="basic-addon1" id="subscribeURI">
+      <span class="input-group-addon" id="subscribeURI">Subscribe URI</span>
+    </div>
+    <br>
+    <div class="btn-group" role="group" aria-label="Basic example">
+      <button type="button" class="btn btn-secondary" onclick="javascript:subscribe();">Subscribe</button>
+      <button type="button" class="btn btn-secondary">Unsubscribe</button>
+    </div>
+    <div id="spuid"></div>
 
+    
+    <br>
+    
       <p>
 	
     <div class="panel panel-default">
       <div class="panel-heading">
 	WoT Devices
       </div>
-      <table class="table">
-	<th>Device</th><th>Name</th><th>Status</th>
-	<tr><td>http://sepaNet#06f7e34a-5518-11e7-b114-b2f933d5fe66</td><td>Reed Sensor</td><td><span class="glyphicon glyphicon-search" aria-hidden="true"></span>&nbsp;<span class="glyphicon glyphicon-ok" aria-hidden="true"></span></td></tr>
-	<tr><td>http://sepaNet#06f7ee4e-1581-1e17-14b1-b285743d5f61</td><td>LCD Display</td><td><span class="glyphicon glyphicon-search" aria-hidden="true"></span>&nbsp;<span class="glyphicon glyphicon-ok" aria-hidden="true"></span></td></tr>
-
-	<tr><td>http://sepaNet#f8696ab8-5519-11e7-b114-b2f933d5fe66</td><td>RFID Reader</td><td><span class="glyphicon glyphicon-search" aria-hidden="true"></span>&nbsp;<span class="glyphicon glyphicon-remove" aria-hidden="true"></span></td></tr>
-
-	<tr><td>http://sepaNet#e5404286-5519-11e7-b114-b2f933d5fe66</td><td>Temperature Sensor</td><td><span class="glyphicon glyphicon-search" aria-hidden="true"></span>&nbsp;<span class="glyphicon glyphicon-ok" aria-hidden="true"></span></td></tr>
-	
+      <table class="table" id="deviceTable">
+	<th>Device</th><th>Name</th><th>Status</th>	
       </table>
     </div>
-
     </div><!-- /.container -->  
 
 
