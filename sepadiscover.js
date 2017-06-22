@@ -128,6 +128,20 @@ function subscribeToDevices(subType){
     ws.onclose = function(event){
 	document.getElementById("spuid").innerHTML = "";
 	console.log("[DEBUG] Closing subscription to devices");
+
+	// recolour interface
+	$("#devicesPanel").removeClass("panel-success");
+	$("#sub1button").removeClass("btn-success");
+	$("#sub2button").removeClass("btn-success");
+	$("#sub3button").removeClass("btn-success");
+	$("#sub1button").removeClass("disabled");
+	$("#sub2button").removeClass("disabled");
+	$("#sub3button").removeClass("disabled");
+	$("#sub1button").prop("disabled", false);
+	$("#sub2button").prop("disabled", false);
+	$("#sub3button").prop("disabled", false);
+	$("#subscribeURI").prop("disabled", false);
+	
     }; 
     
 };
@@ -159,12 +173,12 @@ function subscribeToDevice(deviceId){
 	"PREFIX rdf:<http://www.w3.org/1999/02/22-rdf-syntax-ns#> " +
 	"PREFIX td:<http://w3c.github.io/wot/w3c-wot-td-ontology.owl#> " +
 	"PREFIX dul:<http://www.ontologydesignpatterns.org/ont/dul/DUL.owl#> " +
-	"SELECT ?p ?pName ?pValue " +
+	"SELECT ?property ?propertyName ?propertyValue " +
 	"WHERE { " +
 	"<" + deviceId + "> td:hasProperty ?p . " +
-	"?p td:hasName ?pName . " +
-	"?p td:hasValueType ?pvt . " +
-	"?pvt dul:hasDataValue ?pValue" +
+	"?property td:hasName ?propertyName . " +
+	"?property td:hasValueType ?propertyValueType . " +
+	"?propertyValueType dul:hasDataValue ?propertyValue " +
 	"}";
 
     // subscription
@@ -182,7 +196,6 @@ function subscribeToDevice(deviceId){
 	
 	// parse the message
 	msg = JSON.parse(event.data);
-	console.log(msg);
 
 	// store the subscription ID
 	if (msg["subscribed"] !== undefined){
@@ -202,17 +215,17 @@ function subscribeToDevice(deviceId){
 	    for (var i in msg["results"]["addedresults"]["bindings"]){
 		
 		// iterate over columns
-		puri = msg["results"]["addedresults"]["bindings"][i]["p"]["value"];
-		pname = msg["results"]["addedresults"]["bindings"][i]["pName"]["value"];
-		pvalue = msg["results"]["addedresults"]["bindings"][i]["pValue"]["value"];
+		pUri = msg["results"]["addedresults"]["bindings"][i]["property"]["value"];
+		pName = msg["results"]["addedresults"]["bindings"][i]["propertyName"]["value"];
+		pValue = msg["results"]["addedresults"]["bindings"][i]["propertyValue"]["value"];
 		var table = document.getElementById("devicePropTable");
 		var row = table.insertRow(-1);
 		var f1 = row.insertCell(0);
 		var f2 = row.insertCell(1);
 		var f3 = row.insertCell(2);
-		f1.innerHTML = puri;
-		f2.innerHTML = pname;
-		f3.innerHTML = pvalue;
+		f1.innerHTML = pUri;
+		f2.innerHTML = pName;
+		f3.innerHTML = pValue;
 	    }
 
 	}
@@ -221,8 +234,14 @@ function subscribeToDevice(deviceId){
 
     // 4 - handler for closed websocket
     ws2.onclose = function(event){
+
+	// debug print
 	console.log("[DEBUG] Closing subscription to device property");
-	document.getElementById("deviceSpuid").innerHTML = "";	
+
+	// restore the interface
+	$("#devicePropPanel").removeClass("panel-success");
+	document.getElementById("deviceSpuid").innerHTML = "";
+
     }; 
 
     
@@ -239,20 +258,6 @@ function unsubscribe(){
     if (devicePropertySub !== null){
 	devicePropertySub.close();
     }
-
-    // re-colour the interface in the neutral way
-    $("#devicesPanel").removeClass("panel-success");
-    $("#sub1button").removeClass("btn-success");
-    $("#sub2button").removeClass("btn-success");
-    $("#sub3button").removeClass("btn-success");
-    $("#sub1button").removeClass("disabled");
-    $("#sub2button").removeClass("disabled");
-    $("#sub3button").removeClass("disabled");
-    $("#sub1button").prop("disabled", false);
-    $("#sub2button").prop("disabled", false);
-    $("#sub3button").prop("disabled", false);
-    $("#subscribeURI").prop("disabled", false);
-    $("#devicePropPanel").removeClass("panel-success");
 
 };
 
