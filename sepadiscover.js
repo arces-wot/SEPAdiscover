@@ -56,6 +56,7 @@ function subscribe(subType){
 		"?thingUri wot:isDiscoverable ?thingStatus " +
 		"}";
 	};
+	$("#subscribeURI").prop("disabled", true);    
 	ws.send(JSON.stringify({"subscribe":wsText, "alias":"-"}));
 
     };
@@ -245,6 +246,7 @@ function unsubscribe(){
     $("#sub1button").prop("disabled", false);
     $("#sub2button").prop("disabled", false);
     $("#sub3button").prop("disabled", false);
+    $("#subscribeURI").prop("disabled", false);    
     
 };
 
