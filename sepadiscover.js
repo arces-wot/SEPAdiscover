@@ -2,6 +2,20 @@
 var deviceListSub = null;
 var devicePropertySub = null;
 
+function init(){
+    $("#devicesPanel").removeClass("panel-success");
+    $("#sub1button").removeClass("btn-success");
+    $("#sub2button").removeClass("btn-success");
+    $("#sub3button").removeClass("btn-success");
+    $("#sub1button").removeClass("disabled");
+    $("#sub2button").removeClass("disabled");
+    $("#sub3button").removeClass("disabled");
+    $("#sub1button").prop("disabled", false);
+    $("#sub2button").prop("disabled", false);
+    $("#sub3button").prop("disabled", false);
+    $("#subscribeURI").prop("disabled", false);    
+};
+
 function subscribeToDevices(subType){
 
     // clear previous data in table
@@ -118,7 +132,7 @@ function subscribeToDevices(subType){
 		    f3.innerHTML = '<span class="glyphicon glyphicon-remove" aria-hidden="true"></span>';
 		}
 		var f4 = row.insertCell(3);
-		f4.innerHTML = '<button type="button" class="btn btn-secondary" onclick="javascript:subscribeToDevice(\'' + thingUri + '\');"><span class="glyphicon glyphicon-search" aria-hidden="true"></span></button>';
+		f4.innerHTML = '<button type="button" id=\'' + thingUri.split("#")[1] + 'Btn\' class="btn btn-secondary" onclick="javascript:subscribeToDevice(\'' + thingUri + '\');"><span class="glyphicon glyphicon-search" aria-hidden="true"></span></button>';
 	    }	   
 	}
 	
@@ -150,6 +164,9 @@ function subscribeToDevice(deviceId){
 
     // modify the panel heading
     document.getElementById("deviceName").innerHTML = deviceId;
+
+    // get the related button and colour it
+    $("#" + deviceId.split("#")[1] + "Btn").addClass("btn-success");
     
     // close open subscriptions
     if (devicePropertySub !== null){
@@ -241,6 +258,7 @@ function subscribeToDevice(deviceId){
 	// restore the interface
 	$("#devicePropPanel").removeClass("panel-success");
 	document.getElementById("deviceSpuid").innerHTML = "";
+	$("#" + deviceId.split("#")[1] + "Btn").removeClass("btn-success");
 
     }; 
 
