@@ -1,6 +1,7 @@
 // state variables
 var deviceListSub = null;
 var devicePropertySub = null;
+var devices = [];
 
 function init(){
     $("#devicesPanel").removeClass("panel-success");
@@ -119,21 +120,31 @@ function subscribeToDevices(subType){
 		thingUri = msg["results"]["addedresults"]["bindings"][i]["thingUri"]["value"];
 		thingName = msg["results"]["addedresults"]["bindings"][i]["thingName"]["value"];
 		thingStatus = msg["results"]["addedresults"]["bindings"][i]["thingStatus"]["value"];
+
+		// get the table and check if it's a new device
 		var table = document.getElementById("deviceTable");
-		var row = table.insertRow(-1);
-		var f1 = row.insertCell(0);
-		var f2 = row.insertCell(1);
-		var f3 = row.insertCell(2);
-		f1.innerHTML = thingUri;
-		f2.innerHTML = thingName;
-		if (thingStatus === "true"){
-		    f3.innerHTML = '<span class="glyphicon glyphicon-ok" aria-hidden="true"></span>';
-		} else {
-		    f3.innerHTML = '<span class="glyphicon glyphicon-remove" aria-hidden="true"></span>';
+		if (!document.getElementById(thingUri)){
+		    var row = table.insertRow(-1);
+		    row.id = thingUri;		
+		    var f1 = row.insertCell(0);
+		    var f2 = row.insertCell(1);
+		    var f3 = row.insertCell(2);
+		    f1.innerHTML = thingUri;
+		    f2.innerHTML = thingName;
+		    if (thingStatus === "true"){
+			f3.innerHTML = '<span class="glyphicon glyphicon-ok" aria-hidden="true"></span>';
+		    } else {
+			f3.innerHTML = '<span class="glyphicon glyphicon-remove" aria-hidden="true"></span>';
+		    }
+		    var f4 = row.insertCell(3);
+		    f4.innerHTML = '<button type="button" id=\'' + thingUri.split("#")[1] + 'Btn\' class="btn btn-secondary" onclick="javascript:subscribeToDevice(\'' + thingUri + '\');"><span class="glyphicon glyphicon-search" aria-hidden="true"></span></button>';
 		}
-		var f4 = row.insertCell(3);
-		f4.innerHTML = '<button type="button" id=\'' + thingUri.split("#")[1] + 'Btn\' class="btn btn-secondary" onclick="javascript:subscribeToDevice(\'' + thingUri + '\');"><span class="glyphicon glyphicon-search" aria-hidden="true"></span></button>';
-	    }	   
+		else {
+		    // TODO
+		    console.log("[TODO] Implement editing an existing device");
+		}
+		
+	    }
 	}
 	
     };
