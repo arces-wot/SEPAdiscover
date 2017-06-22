@@ -2,7 +2,7 @@
 var deviceListSub = null;
 var devicePropertySub = null;
 
-function subscribe(subType){
+function subscribeToDevices(subType){
 
     // clear previous data in table
     var table = document.getElementById("deviceTable");
@@ -56,7 +56,8 @@ function subscribe(subType){
 		"?thingUri wot:isDiscoverable ?thingStatus " +
 		"}";
 	};
-	$("#subscribeURI").prop("disabled", true);    
+	$("#subscribeURI").prop("disabled", true);
+	$("#devicesPanel").addClass("panel-success");
 	ws.send(JSON.stringify({"subscribe":wsText, "alias":"-"}));
 
     };
@@ -80,32 +81,20 @@ function subscribe(subType){
 	    // store the subscription into the global variable
 	    deviceListSub = ws;
 
-	    // change the colour of the button
+	    // change the colour of the buttons
 	    if (subType === "things"){
-		$("#sub1button").addClass("btn-success");
-		$("#sub1button").addClass("disabled");
-		$("#sub2button").addClass("disabled");
-		$("#sub3button").addClass("disabled");
-		$("#sub1button").prop("disabled", true);
-		$("#sub2button").prop("disabled", true);
-		$("#sub3button").prop("disabled", true);			
+		$("#sub1button").addClass("btn-success");			
 	    } else if (subType === "sensors"){
 		$("#sub2button").addClass("btn-success");
-		$("#sub1button").addClass("disabled");
-		$("#sub2button").addClass("disabled");
-		$("#sub3button").addClass("disabled");
-		$("#sub1button").prop("disabled", true);
-		$("#sub2button").prop("disabled", true);
-		$("#sub3button").prop("disabled", true);
 	    } else if (subType === "actuators"){
 		$("#sub3button").addClass("btn-success");
-		$("#sub3button").addClass("disabled");
-		$("#sub2button").addClass("disabled");
-		$("#sub1button").addClass("disabled");
-		$("#sub1button").prop("disabled", true);
-		$("#sub2button").prop("disabled", true);
-		$("#sub3button").prop("disabled", true);
 	    } 
+	    $("#sub3button").addClass("disabled");
+	    $("#sub2button").addClass("disabled");
+	    $("#sub1button").addClass("disabled");
+	    $("#sub1button").prop("disabled", true);
+	    $("#sub2button").prop("disabled", true);
+	    $("#sub3button").prop("disabled", true);
 	    
 	} else if (msg["results"] !== undefined){
 
@@ -129,9 +118,8 @@ function subscribe(subType){
 		    f3.innerHTML = '<span class="glyphicon glyphicon-remove" aria-hidden="true"></span>';
 		}
 		var f4 = row.insertCell(3);
-		f4.innerHTML = '<button type="button" class="btn btn-secondary" onclick="javascript:monitor(\'' + thingUri + '\');"><span class="glyphicon glyphicon-search" aria-hidden="true"></span></button>';
-	    }
-
+		f4.innerHTML = '<button type="button" class="btn btn-secondary" onclick="javascript:subscribeToDevice(\'' + thingUri + '\');"><span class="glyphicon glyphicon-search" aria-hidden="true"></span></button>';
+	    }	   
 	}
 	
     };
@@ -144,8 +132,11 @@ function subscribe(subType){
     
 };
 
-function monitor(deviceId){
+function subscribeToDevice(deviceId){
 
+    // modify the panel heading
+    document.getElementById("deviceName").innerHTML = deviceId;
+    
     // close open subscriptions
     if (devicePropertySub !== null){
 	console.log("[DEBUG] Closing previous subscription");
@@ -158,10 +149,23 @@ function monitor(deviceId){
 	table.deleteRow(-1);
     }
 
+    // change the colour of the panel
+    $("#devicePropPanel").removeClass("panel-success");
+    $("#devicePropPanel").addClass("panel-success");
     
     // prepare the subscription
     subscUrl = document.getElementById("subscribeURI").value;
-    subText = "PREFIX wot:<http://www.arces.unibo.it/wot#> PREFIX rdf:<http://www.w3.org/1999/02/22-rdf-syntax-ns#> PREFIX td:<http://w3c.github.io/wot/w3c-wot-td-ontology.owl#> PREFIX dul:<http://www.ontologydesignpatterns.org/ont/dul/DUL.owl#> SELECT ?p ?pName ?pValue WHERE { <" + deviceId + "> td:hasProperty ?p . ?p td:hasName ?pName . ?p td:hasValueType ?pvt . ?pvt dul:hasDataValue ?pValue }";
+    subText = "PREFIX wot:<http://www.arces.unibo.it/wot#> " +
+	"PREFIX rdf:<http://www.w3.org/1999/02/22-rdf-syntax-ns#> " +
+	"PREFIX td:<http://w3c.github.io/wot/w3c-wot-td-ontology.owl#> " +
+	"PREFIX dul:<http://www.ontologydesignpatterns.org/ont/dul/DUL.owl#> " +
+	"SELECT ?p ?pName ?pValue " +
+	"WHERE { " +
+	"<" + deviceId + "> td:hasProperty ?p . " +
+	"?p td:hasName ?pName . " +
+	"?p td:hasValueType ?pvt . " +
+	"?pvt dul:hasDataValue ?pValue" +
+	"}";
 
     // subscription
     
@@ -236,7 +240,8 @@ function unsubscribe(){
 	devicePropertySub.close();
     }
 
-    // clear the button color
+    // re-colour the interface in the neutral way
+    $("#devicesPanel").removeClass("panel-success");
     $("#sub1button").removeClass("btn-success");
     $("#sub2button").removeClass("btn-success");
     $("#sub3button").removeClass("btn-success");
@@ -246,8 +251,9 @@ function unsubscribe(){
     $("#sub1button").prop("disabled", false);
     $("#sub2button").prop("disabled", false);
     $("#sub3button").prop("disabled", false);
-    $("#subscribeURI").prop("disabled", false);    
-    
+    $("#subscribeURI").prop("disabled", false);
+    $("#devicePropPanel").removeClass("panel-success");
+
 };
 
 function clearData(){
@@ -266,5 +272,8 @@ function clearData(){
     while(table.rows.length > 1) {
 	table.deleteRow(-1);
     }
+
+    // clear the panel heading for device properties
+    document.getElementById("deviceName").innerHTML = "";
     
 };
