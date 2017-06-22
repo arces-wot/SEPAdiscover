@@ -56,38 +56,54 @@
 
 
     <!-- RESULTS -->
+    <!-- <div class="input-group"> -->
+    <!--   <span class="input-group-addon" id="queryURI">Update/Query URI</span> -->
+    <!--   <input type="text" class="form-control" placeholder="http://192.168.1.100:8000/query" aria-describedby="basic-addon1" id="queryURI"> -->
+    <!-- </div> -->
+    <!-- <br> -->
     <div class="input-group">
-      <span class="input-group-addon" id="queryURI">Update/Query URI</span>
-      <input type="text" class="form-control" placeholder="http://192.168.1.100:8000/sparql" aria-describedby="basic-addon1" id="queryURI">
-    </div>
-    <br>
-    <div class="input-group">
-      <input type="text" class="form-control" placeholder="ws://192.168.1.100:9000/sparql" aria-describedby="basic-addon1" id="subscribeURI">
+      <input type="text" class="form-control" placeholder="ws://192.168.1.100:9000/subscribe" aria-describedby="basic-addon1" id="subscribeURI">
       <span class="input-group-addon" id="subscribeURI">Subscribe URI</span>
     </div>
     <br>
     <div class="btn-group" role="group" aria-label="Basic example">
-      <button type="button" class="btn btn-secondary" onclick="javascript:subscribe();">Subscribe</button>
-      <button type="button" class="btn btn-secondary">Unsubscribe</button>
+      <button type="button" class="btn btn-secondary" onclick="javascript:subscribe();">Things</button>
+      <button type="button" class="btn btn-secondary">Sensors</button>
+      <button type="button" class="btn btn-secondary">Actuators</button>
     </div>
-    <div id="spuid"></div>
-
     
-    <br>
+    <br><br>
     
       <p>
-	
+
+	<!-- DEVICE LIST -->
     <div class="panel panel-default">
       <div class="panel-heading">
 	WoT Devices
       </div>
       <table class="table" id="deviceTable">
-	<th>Device</th><th>Name</th><th>Status</th>	
+	<th>Device</th><th>Name</th><th>Status</th><th></th>
       </table>
+      <div class="panel-footer" id="spuid">	
+      </div>
     </div>
-    </div><!-- /.container -->  
+    <br>
 
-
+    <!-- DEVICE MONITOR -->
+    <div class="panel panel-default">
+      <div class="panel-heading">
+	Properties of WoT Device <div id="deviceName"></div>
+      </div>
+      <table class="table" id="devicePropTable">
+	<th>Property</th><th>Name</th><th>Value</th>	
+      </table>
+      <div class="panel-footer">
+	<div id="deviceSpuid"></div>
+      </div>
+    </div>
+    </div>
+    
+    <!-- FOOTER -->
     <footer class="footer">
       <div class="container">
         <p class="text-muted">Released by Web of Things Research (ARCES, University of Bologna) under GPLv3 License</p>
