@@ -54,22 +54,23 @@
         <p class="lead">Use this tool to explore the devices in your Web of Things network.</p>
       </div>
 
-
-    <!-- RESULTS -->
-    <!-- <div class="input-group"> -->
-    <!--   <span class="input-group-addon" id="queryURI">Update/Query URI</span> -->
-    <!--   <input type="text" class="form-control" placeholder="http://192.168.1.100:8000/query" aria-describedby="basic-addon1" id="queryURI"> -->
-    <!-- </div> -->
-    <!-- <br> -->
     <div class="input-group">
       <input type="text" class="form-control" placeholder="ws://192.168.1.100:9000/subscribe" aria-describedby="basic-addon1" id="subscribeURI">
-      <span class="input-group-addon" id="subscribeURI">Subscribe URI</span>
+      <span class="input-group-addon" id="subscribeURIlabel">Subscribe URI</span>
     </div>
     <br>
-    <div class="btn-group" role="group" aria-label="Basic example">
-      <button type="button" class="btn btn-secondary" onclick="javascript:subscribe();">Things</button>
-      <button type="button" class="btn btn-secondary">Sensors</button>
-      <button type="button" class="btn btn-secondary">Actuators</button>
+    <div class="btn-toolbar" role="toolbar" aria-label="Button toolbar">
+      <div class="btn-group" role="group" aria-label="Basic example">
+	<button type="button" class="btn btn-secondary" onclick="javascript:subscribe('things');" id="sub1button">Things</button>
+	<button type="button" class="btn btn-secondary" onclick="javascript:subscribe('sensors');" id="sub2button">Sensors</button>
+	<button type="button" class="btn btn-secondary" onclick="javascript:subscribe('actuators');" id="sub3button">Actuators</button>
+      </div>
+      <div class="btn-group" role="group" aria-label="Basic example">
+	<button type="button" class="btn btn-secondary" onclick="javascript:unsubscribe();">Unsubscribe</button>
+      </div>
+      <div class="btn-group" role="group" aria-label="Basic example">
+	<button type="button" class="btn btn-secondary" onclick="javascript:clearData();">Clear</button>
+      </div>
     </div>
     
     <br><br>
