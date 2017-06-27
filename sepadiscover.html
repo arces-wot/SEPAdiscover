@@ -90,19 +90,29 @@
     </div>
     <br>
 
-    <!-- DEVICE MONITOR -->
+    <!-- DEVICE PROPERTIES MONITOR -->
     <div class="panel panel-default" id="devicePropPanel">
       <div class="panel-heading">
-	Properties of WoT Device <div id="deviceName"></div>
+	Properties of WoT Device <div class="deviceName"></div>
       </div>
       <table class="table" id="devicePropTable">
 	<th>Property</th><th>Name</th><th>Value</th>	
       </table>
-      <div class="panel-footer">
-	<div id="deviceSpuid"></div>
+      <div class="panel-footer" id="devicePropertiesSpuid"></div>
+    </div>
+    <br>
+
+    <!-- DEVICE EVENTS MONITOR -->
+    <div class="panel panel-default" id="deviceEventsPanel">
+      <div class="panel-heading">
+	Events of WoT Device <div class="deviceName"></div>
       </div>
+      <table class="table" id="deviceEventsTable">
+	<th>Event</th><th>Name</th><th>Instance</th><th>Timestamp</th><th>Value</th>	
+      </table>
+      <div class="panel-footer" id="deviceEventsSpuid"></div>
     </div>
-    </div>
+    </div>    
     
     <!-- FOOTER -->
     <footer class="footer">

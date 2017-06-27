@@ -1,10 +1,15 @@
 // state variables
 var deviceListSub = null;
-var devicePropertySub = null;
+var devicePropertiesSub = null;
+var devicePropertiesSpuid = null
+var deviceEventsSub = null;
+var deviceEventsSpuid = null;
 var devices = [];
 
 function init(){
     $("#devicesPanel").removeClass("panel-success");
+    $("#devicesEventsPanel").removeClass("panel-success");
+    $("#devicesPropPanel").removeClass("panel-success");
     $("#sub1button").removeClass("btn-success");
     $("#sub2button").removeClass("btn-success");
     $("#sub3button").removeClass("btn-success");
@@ -73,6 +78,7 @@ function subscribeToDevices(subType){
 	};
 	$("#subscribeURI").prop("disabled", true);
 	$("#devicesPanel").addClass("panel-success");
+	$("#eventsPanel").addClass("panel-success");
 	ws.send(JSON.stringify({"subscribe":wsText, "alias":"-"}));
 
     };
@@ -124,11 +130,16 @@ function subscribeToDevices(subType){
 		// get the table and check if it's a new device
 		var table = document.getElementById("deviceTable");
 		if (!document.getElementById(thingUri)){
+
+		    // determine id for html elements
+		    htmlThingId = thingUri.split("#")[1];
+		    htmlThingStatus = thingUri.split("#")[1] + "_status";
+		    
 		    var row = table.insertRow(-1);
 		    row.id = thingUri;		
 		    var f1 = row.insertCell(0);
 		    var f2 = row.insertCell(1);
-		    var f3 = row.insertCell(2);
+		    var f3 = row.insertCell(2);		    
 		    f1.innerHTML = thingUri;
 		    f2.innerHTML = thingName;
 		    if (thingStatus === "true"){
@@ -137,13 +148,20 @@ function subscribeToDevices(subType){
 			f3.innerHTML = '<span class="glyphicon glyphicon-remove" aria-hidden="true"></span>';
 		    }
 		    var f4 = row.insertCell(3);
-		    f4.innerHTML = '<button type="button" id=\'' + thingUri.split("#")[1] + 'Btn\' class="btn btn-secondary" onclick="javascript:subscribeToDevice(\'' + thingUri + '\');"><span class="glyphicon glyphicon-search" aria-hidden="true"></span></button>';
+		    f4.innerHTML = '<button type="button" id=\'' + htmlThingId + 'Btn\' class="btn btn-secondary" onclick="javascript:subscribeToDevice(\'' + thingUri + '\');"><span id=\'' + htmlThingStatus + '\' class="glyphicon glyphicon-search" aria-hidden="true"></span></button>';
 		}
 		else {
-		    // TODO
-		    console.log("[TODO] Implement editing an existing device");
-		}
-		
+
+		    // determine id for html elements
+		    htmlThingId = thingUri.split("#")[1];
+		    htmlThingStatus = thingUri.split("#")[1] + "_status";	    
+		    if (thingStatus === "true"){
+			document.getElementById(htmlThingStatus).innerHTML = '<span class="glyphicon glyphicon-ok" aria-hidden="true"></span>';
+		    } else {
+			document.getElementById(htmlThingStatus).innerHTML = '<span class="glyphicon glyphicon-remove" aria-hidden="true"></span>';
+		    }
+		    
+		}		
 	    }
 	}
 	
@@ -156,6 +174,7 @@ function subscribeToDevices(subType){
 
 	// recolour interface
 	$("#devicesPanel").removeClass("panel-success");
+	$("#eventsPanel").removeClass("panel-success");
 	$("#sub1button").removeClass("btn-success");
 	$("#sub2button").removeClass("btn-success");
 	$("#sub3button").removeClass("btn-success");
@@ -173,20 +192,35 @@ function subscribeToDevices(subType){
 
 function subscribeToDevice(deviceId){
 
-    // modify the panel heading
-    document.getElementById("deviceName").innerHTML = deviceId;
-
+    // modify the panel headings
+    deviceNameSections = document.getElementsByClassName("deviceName");
+    for (d in deviceNameSections){
+	deviceNameSections[d].innerHTML = deviceId;
+    };
+    
     // get the related button and colour it
     $("#" + deviceId.split("#")[1] + "Btn").addClass("btn-success");
     
-    // close open subscriptions
-    if (devicePropertySub !== null){
-	console.log("[DEBUG] Closing previous subscription");
-	devicePropertySub.close();
+    // close open subscriptions for properties
+    if (devicePropertiesSub !== null){
+	console.log("[DEBUG] Closing previous subscription to properties");
+	devicePropertiesSub.close();
+    };
+
+    // close open subscriptions for events
+    if (deviceEventsSub !== null){
+	console.log("[DEBUG] Closing previous subscription to events");
+	deviceEventsSub.close();
+    };
+
+    // clear previous data in properties table
+    var table = document.getElementById("devicePropTable");
+    while(table.rows.length > 1) {
+	table.deleteRow(-1);
     }
 
-    // clear previous data in table
-    var table = document.getElementById("devicePropTable");
+    // clear previous data in events table
+    var table = document.getElementById("deviceEventsTable");
     while(table.rows.length > 1) {
 	table.deleteRow(-1);
     }
@@ -194,29 +228,32 @@ function subscribeToDevice(deviceId){
     // change the colour of the panel
     $("#devicePropPanel").removeClass("panel-success");
     $("#devicePropPanel").addClass("panel-success");
+    $("#deviceEventsPanel").removeClass("panel-success");
+    $("#deviceEventsPanel").addClass("panel-success");
     
-    // prepare the subscription
+    // prepare the subscription to properties
     subscUrl = document.getElementById("subscribeURI").value;
-    subText = "PREFIX wot:<http://www.arces.unibo.it/wot#> " +
+    propertiesSubText = "PREFIX wot:<http://www.arces.unibo.it/wot#> " +
 	"PREFIX rdf:<http://www.w3.org/1999/02/22-rdf-syntax-ns#> " +
 	"PREFIX td:<http://w3c.github.io/wot/w3c-wot-td-ontology.owl#> " +
 	"PREFIX dul:<http://www.ontologydesignpatterns.org/ont/dul/DUL.owl#> " +
 	"SELECT ?property ?propertyName ?propertyValue " +
 	"WHERE { " +
-	"<" + deviceId + "> td:hasProperty ?p . " +
+	"<" + deviceId + "> td:hasProperty ?property . " +
 	"?property td:hasName ?propertyName . " +
-	"?property td:hasValueType ?propertyValueType . " +
+	"?property td:hasValueType ?propertyValueType . " +	
 	"?propertyValueType dul:hasDataValue ?propertyValue " +
 	"}";
 
     // subscription
     
     // 1 - open connection
+    console.log("[DEBUG] Subscribing to device properties");
     var ws2 = new WebSocket(subscUrl);
     
     // 2 - send subscription
     ws2.onopen = function(){
-	ws2.send(JSON.stringify({"subscribe":subText, "alias":"-"}));
+	ws2.send(JSON.stringify({"subscribe":propertiesSubText, "alias":"properties"}));
     };
     
     // 3 - handler for received messages
@@ -228,36 +265,53 @@ function subscribeToDevice(deviceId){
 	// store the subscription ID
 	if (msg["subscribed"] !== undefined){
 
-	    // get the subid
-	    subid = msg["subscribed"];
+	    // check if the confirm is for the properties subscription
+	    if (msg["alias"] === "properties"){
+		
+		// get the subid
+		subid = msg["subscribed"];
+		console.log("[DEBUG] Assigned id " + subid + " to properties subscription");
+		
+		// store the subid in the html field
+		document.getElementById("devicePropertiesSpuid").innerHTML = subid;
 
-	    // store the subid in the html field
-	    document.getElementById("deviceSpuid").innerHTML = subid;
-
-	    // save the websocket
-	    devicePropertySub = ws2;
+		// store the subid
+		devicePropertiesSpuid = subid
+		
+		// save the websocket
+		devicePropertiesSub = ws2;
+	    };	    
 	    
 	} else if (msg["results"] !== undefined){
 
-	    // iterate over rows of the results
-	    for (var i in msg["results"]["addedresults"]["bindings"]){
+	    if (msg["spuid"] === devicePropertiesSpuid){
 		
-		// iterate over columns
-		pUri = msg["results"]["addedresults"]["bindings"][i]["property"]["value"];
-		pName = msg["results"]["addedresults"]["bindings"][i]["propertyName"]["value"];
-		pValue = msg["results"]["addedresults"]["bindings"][i]["propertyValue"]["value"];
-		var table = document.getElementById("devicePropTable");
-		var row = table.insertRow(-1);
-		var f1 = row.insertCell(0);
-		var f2 = row.insertCell(1);
-		var f3 = row.insertCell(2);
-		f1.innerHTML = pUri;
-		f2.innerHTML = pName;
-		f3.innerHTML = pValue;
-	    }
+		// iterate over rows of the results
+		for (var i in msg["results"]["addedresults"]["bindings"]){
 
-	}
-	
+		    // iterate over columns
+		    pUri = msg["results"]["addedresults"]["bindings"][i]["property"]["value"];
+		    pName = msg["results"]["addedresults"]["bindings"][i]["propertyName"]["value"];
+		    pValue = msg["results"]["addedresults"]["bindings"][i]["propertyValue"]["value"];
+		    var table = document.getElementById("devicePropTable");
+
+		    if (!document.getElementById(pUri)){		
+			var row = table.insertRow(-1);
+			row.id = pUri;
+			var f1 = row.insertCell(0);
+			var f2 = row.insertCell(1);
+			var f3 = row.insertCell(2);
+			f3.id = pUri.split("#")[1] + "_value";
+			f1.innerHTML = pUri;
+			f2.innerHTML = pName;
+			f3.innerHTML = pValue;
+		    } else {
+			f3 = document.getElementById(pUri.split("#")[1] + "_value");
+			f3.innerHTML = pValue;
+		    }				
+		}
+	    }
+	}	
     };
 
     // 4 - handler for closed websocket
@@ -268,10 +322,119 @@ function subscribeToDevice(deviceId){
 
 	// restore the interface
 	$("#devicePropPanel").removeClass("panel-success");
-	document.getElementById("deviceSpuid").innerHTML = "";
+	document.getElementById("devicePropertiesSpuid").innerHTML = "";
 	$("#" + deviceId.split("#")[1] + "Btn").removeClass("btn-success");
 
-    }; 
+    };
+
+    // prepare the subscription to events
+    eventsSubText = "PREFIX wot:<http://www.arces.unibo.it/wot#> " +
+    	"PREFIX rdf:<http://www.w3.org/1999/02/22-rdf-syntax-ns#> " +
+    	"PREFIX td:<http://w3c.github.io/wot/w3c-wot-td-ontology.owl#> " +
+    	"PREFIX dul:<http://www.ontologydesignpatterns.org/ont/dul/DUL.owl#> " +
+    	"SELECT ?event ?eventName ?instance ?timestamp ?value " +
+    	"WHERE { " +
+    	"<" + deviceId + "> td:hasEvent ?event . " +
+    	"?event td:hasName ?eventName . " +
+    	"?event wot:hasInstance ?instance . " +
+    	"?instance wot:hasTimeStamp ?timestamp . " +
+	"OPTIONAL { ?instance td:hasOutput ?output ." +
+	"?output dul:hasDataValue ?value }" +
+    	"}";
+
+    // 1 - open connection
+    var ws3 = new WebSocket(subscUrl);
+    
+    // 2 - send subscription
+    console.log("[DEBUG] Subscribing to device events");
+    ws3.onopen = function(){
+    	ws3.send(JSON.stringify({"subscribe":eventsSubText, "alias":"events"}));
+    };
+    
+    // 3 - handler for received messages
+    ws3.onmessage = function(event){
+    
+    	// parse the message
+    	emsg = JSON.parse(event.data);
+
+    	// store the subscription ID
+    	if (emsg["subscribed"] !== undefined){
+
+    	    // get the subid
+    	    subid = emsg["subscribed"];
+	    console.log("[DEBUG] Assigned id " + subid + " to events subscription");
+
+    	    // store the subid in the html field
+    	    document.getElementById("deviceEventsSpuid").innerHTML = subid;
+
+	    // store the subid
+	    deviceEventsSpuid = subid;
+	    
+    	    // save the websocket
+    	    deviceEventsSub = ws3;
+    
+    	} else if (emsg["results"] !== undefined){
+
+	    if (emsg["spuid"] === deviceEventsSpuid){
+
+    		// iterate over rows of the results
+    		for (var i in emsg["results"]["addedresults"]["bindings"]){
+		    
+    		    // iterate over columns
+    		    eUri = emsg["results"]["addedresults"]["bindings"][i]["event"]["value"];
+    		    eName = emsg["results"]["addedresults"]["bindings"][i]["eventName"]["value"];
+    		    eInstance = emsg["results"]["addedresults"]["bindings"][i]["instance"]["value"];
+		    eTimestamp = emsg["results"]["addedresults"]["bindings"][i]["timestamp"]["value"];
+		    if (emsg["results"]["addedresults"]["bindings"][i]["value"] !== undefined){
+			eValue = emsg["results"]["addedresults"]["bindings"][i]["value"]["value"];
+		    }
+    		    var table = document.getElementById("deviceEventsTable");
+
+    		    if (!document.getElementById(eUri)){		
+    			var row = table.insertRow(-1);
+    			row.id = eUri;
+    			var f1 = row.insertCell(0);
+    			var f2 = row.insertCell(1);
+    			var f3 = row.insertCell(2);
+			var f4 = row.insertCell(3);
+			var f5 = row.insertCell(4);
+    			f3.id = eUri.split("#")[1] + "_instance";
+			f4.id = eUri.split("#")[1] + "_timestamp";
+			f5.id = eUri.split("#")[1] + "_value";
+    			f1.innerHTML = eUri;
+    			f2.innerHTML = eName;
+			f3.innerHTML = eInstance;
+			f4.innerHTML = eTimestamp;
+			if (emsg["results"]["addedresults"]["bindings"][i]["value"] !== undefined){
+    			    f5.innerHTML = eValue;
+			}
+    		    } else {
+    			f3 = document.getElementById(eUri.split("#")[1] + "_instance");
+			f4 = document.getElementById(eUri.split("#")[1] + "_timestamp");
+			f5 = document.getElementById(eUri.split("#")[1] + "_value");
+			f3.innerHTML = eInstance;
+			f4.innerHTML = eTimestamp;
+			if (emsg["results"]["addedresults"]["bindings"][i]["value"] !== undefined){
+    			    f5.innerHTML = eValue;
+			}
+    		    }				
+    		}
+	    }
+    	}	
+    };
+
+    // 4 - handler for closed websocket
+    ws3.onclose = function(event){
+
+    	// debug print
+    	console.log("[DEBUG] Closing subscription to device events");
+
+    	// restore the interface
+    	$("#deviceEventsPanel").removeClass("panel-success");
+    	document.getElementById("deviceEventsSpuid").innerHTML = "";
+    	$("#" + deviceId.split("#")[1] + "Btn").removeClass("btn-success");
+
+    };
 
     
 };
@@ -281,13 +444,18 @@ function unsubscribe(){
     // close subscription to devices
     if (deviceListSub !== null){
 	deviceListSub.close();
-    }
+    };
 
     // close subscription to properties
-    if (devicePropertySub !== null){
-	devicePropertySub.close();
-    }
+    if (devicePropertiesSub !== null){
+	devicePropertiesSub.close();
+    };
 
+    // close subscription to events
+    if (deviceEventsSub !== null){
+	deviceEventsSub.close();
+    };
+    
 };
 
 function clearData(){
@@ -295,19 +463,28 @@ function clearData(){
     // unsubscribe
     unsubscribe();
 
-    // clear previous data in table
+    // clear previous data in the properties table
     var table = document.getElementById("devicePropTable");
     while(table.rows.length > 1) {
 	table.deleteRow(-1);
-    }
+    };
 
-    // clear previous data in table
+    // clear previous data in the events table
+    var table = document.getElementById("deviceEventsTable");
+    while(table.rows.length > 1) {
+	table.deleteRow(-1);
+    };
+
+    // clear previous data in the main table
     var table = document.getElementById("deviceTable");
     while(table.rows.length > 1) {
 	table.deleteRow(-1);
-    }
+    };
 
-    // clear the panel heading for device properties
-    document.getElementById("deviceName").innerHTML = "";
+    // clear the panel heading for device properties and events
+    deviceNameSections = document.getElementsByClassName("deviceName");
+    for (d in deviceNameSections){
+	deviceNameSections[d].innerHTML = "";
+    };
     
 };
