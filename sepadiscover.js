@@ -4,6 +4,8 @@ var devicePropertiesSub = null;
 var devicePropertiesSpuid = null
 var deviceEventsSub = null;
 var deviceEventsSpuid = null;
+var deviceActionsSub = null;
+var deviceActionsSpuid = null;
 var devices = [];
 
 function init(){
@@ -230,6 +232,8 @@ function subscribeToDevice(deviceId){
     $("#devicePropPanel").addClass("panel-success");
     $("#deviceEventsPanel").removeClass("panel-success");
     $("#deviceEventsPanel").addClass("panel-success");
+    $("#deviceActionsPanel").removeClass("panel-success");
+    $("#deviceActionsPanel").addClass("panel-success");
     
     // prepare the subscription to properties
     subscUrl = document.getElementById("subscribeURI").value;
@@ -436,7 +440,92 @@ function subscribeToDevice(deviceId){
 
     };
 
+    // prepare the subscription to actions
+    actionsSubText = "PREFIX wot:<http://www.arces.unibo.it/wot#> " +
+	"PREFIX rdf:<http://www.w3.org/1999/02/22-rdf-syntax-ns#> " +
+	"PREFIX td:<http://w3c.github.io/wot/w3c-wot-td-ontology.owl#> " +
+	"PREFIX dul:<http://www.ontologydesignpatterns.org/ont/dul/DUL.owl#> " +
+	"SELECT ?action ?actionName " +
+	"WHERE { " +
+	"<" + deviceId + "> td:hasAction ?action . " +
+	"?action td:hasName ?actionName " +
+	"}";
+
+    // subscription
     
+    // 1 - open connection
+    console.log("[DEBUG] Subscribing to device actions");
+    var ws4 = new WebSocket(subscUrl);
+    
+    // 2 - send subscription
+    ws4.onopen = function(){
+	ws4.send(JSON.stringify({"subscribe":actionsSubText, "alias":"actions"}));
+    };
+    
+    // 3 - handler for received messages
+    ws4.onmessage = function(event){
+	
+	// parse the message
+	msg = JSON.parse(event.data);
+
+	// store the subscription ID
+	if (msg["subscribed"] !== undefined){
+
+	    // check if the confirm is for the properties subscription
+	    if (msg["alias"] === "actions"){
+		
+		// get the subid
+		subid = msg["subscribed"];
+		console.log("[DEBUG] Assigned id " + subid + " to actions subscription");
+		
+		// store the subid in the html field
+		document.getElementById("deviceActionsSpuid").innerHTML = subid;
+
+		// store the subid
+		deviceActionsSpuid = subid
+		
+		// save the websocket
+		deviceActionsSub = ws3;
+	    };	    
+	    
+	} else if (msg["results"] !== undefined){
+
+	    if (msg["spuid"] === deviceActionsSpuid){
+		
+		// iterate over rows of the results
+		for (var i in msg["results"]["addedresults"]["bindings"]){
+
+		    // iterate over columns
+		    aUri = msg["results"]["addedresults"]["bindings"][i]["action"]["value"];
+		    aName = msg["results"]["addedresults"]["bindings"][i]["actionName"]["value"];
+		    var table = document.getElementById("deviceActionsTable");
+
+		    if (!document.getElementById(aUri)){		
+			var row = table.insertRow(-1);
+			row.id = aUri;
+			var f1 = row.insertCell(0);
+			var f2 = row.insertCell(1);
+			f1.innerHTML = aUri;
+			f2.innerHTML = aName;
+		    }
+		}
+	    }
+	}	
+    };
+
+    // 4 - handler for closed websocket
+    ws4.onclose = function(event){
+
+	// debug print
+	console.log("[DEBUG] Closing subscription to device actions");
+
+	// restore the interface
+	$("#deviceActionsPanel").removeClass("panel-success");
+	document.getElementById("deviceActionsSpuid").innerHTML = "";
+	$("#" + deviceId.split("#")[1] + "Btn").removeClass("btn-success");
+
+    };
+   
 };
 
 function unsubscribe(){
