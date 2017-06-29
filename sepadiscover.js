@@ -533,16 +533,25 @@ function unsubscribe(){
     // close subscription to devices
     if (deviceListSub !== null){
 	deviceListSub.close();
+	deviceListSub = null;
     };
 
     // close subscription to properties
     if (devicePropertiesSub !== null){
 	devicePropertiesSub.close();
+	devicePropertiesSub = null;
     };
 
     // close subscription to events
     if (deviceEventsSub !== null){
 	deviceEventsSub.close();
+	deviceEventsSub = null;
+    };
+
+    // close subscription to events
+    if (deviceActionsSub !== null){
+	deviceActionsSub.close();
+	deviceActionsSub = null;
     };
     
 };
