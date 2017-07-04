@@ -7,6 +7,7 @@ var deviceEventsSpuid = null;
 var deviceActionsSub = null;
 var deviceActionsSpuid = null;
 var devices = [];
+var activeDevice = null;
 
 function init(){
     $("#devicesPanel").removeClass("panel-success");
@@ -46,9 +47,9 @@ function subscribeToDevices(subType){
 	wsText = "";
 	console.log(subType);
 	if (subType === "things"){
-	    wsText = "PREFIX wot:<http://www.arces.unibo.it/wot#> " +
+	    wsText = "PREFIX wot:<http://wot.arces.unibo.it/sepa#> " +
 		"PREFIX rdf:<http://www.w3.org/1999/02/22-rdf-syntax-ns#> " +
-		"PREFIX td:<http://w3c.github.io/wot/w3c-wot-td-ontology.owl#> "+
+		"PREFIX td:<http://www.w3.org/ns/td#> "+
 		"SELECT ?thingUri ?thingName ?thingStatus " +
 		"WHERE { " +
 		"?thingUri rdf:type td:Thing . " +
@@ -56,9 +57,9 @@ function subscribeToDevices(subType){
 		"?thingUri wot:isDiscoverable ?thingStatus " +
 		"}";
 	} else if (subType === "sensors"){
-	    wsText = "PREFIX wot:<http://www.arces.unibo.it/wot#> " +
+	    wsText = "PREFIX wot:<http://wot.arces.unibo.it/sepa#> " +
 		"PREFIX rdf:<http://www.w3.org/1999/02/22-rdf-syntax-ns#> " +
-		"PREFIX td:<http://w3c.github.io/wot/w3c-wot-td-ontology.owl#> "+
+		"PREFIX td:<http://www.w3.org/ns/td#> "+
 		"SELECT ?thingUri ?thingName ?thingStatus " +
 		"WHERE { " +
 		"?thingUri rdf:type td:Thing . " +
@@ -67,9 +68,9 @@ function subscribeToDevices(subType){
 		"?thingUri wot:isDiscoverable ?thingStatus " +
 		"}";
 	} else if (subType === "actuators"){
-	    wsText = "PREFIX wot:<http://www.arces.unibo.it/wot#> " +
+	    wsText = "PREFIX wot:<http://wot.arces.unibo.it/wot#> " +
 		"PREFIX rdf:<http://www.w3.org/1999/02/22-rdf-syntax-ns#> " +
-		"PREFIX td:<http://w3c.github.io/wot/w3c-wot-td-ontology.owl#> "+
+		"PREFIX td:<http://www.w3.org/ns/td#> "+
 		"SELECT ?thingUri ?thingName ?thingStatus " +
 		"WHERE { " +
 		"?thingUri rdf:type td:Thing . " +
@@ -194,6 +195,12 @@ function subscribeToDevices(subType){
 
 function subscribeToDevice(deviceId){
 
+    // clear previously opened subscriptions
+    unsubscribe();
+
+    // clear tables
+    emptyTables();
+    
     // modify the panel headings
     deviceNameSections = document.getElementsByClassName("deviceName");
     for (d in deviceNameSections){
@@ -237,16 +244,16 @@ function subscribeToDevice(deviceId){
     
     // prepare the subscription to properties
     subscUrl = document.getElementById("subscribeURI").value;
-    propertiesSubText = "PREFIX wot:<http://www.arces.unibo.it/wot#> " +
+    propertiesSubText = "PREFIX wot:<http://wot.arces.unibo.it/wot#> " +
 	"PREFIX rdf:<http://www.w3.org/1999/02/22-rdf-syntax-ns#> " +
-	"PREFIX td:<http://w3c.github.io/wot/w3c-wot-td-ontology.owl#> " +
+	"PREFIX td:<http://www.w3.org/ns/td#> " +
 	"PREFIX dul:<http://www.ontologydesignpatterns.org/ont/dul/DUL.owl#> " +
 	"SELECT ?property ?propertyName ?propertyValue " +
 	"WHERE { " +
 	"<" + deviceId + "> td:hasProperty ?property . " +
 	"?property td:hasName ?propertyName . " +
 	"?property td:hasValueType ?propertyValueType . " +	
-	"?propertyValueType dul:hasDataValue ?propertyValue " +
+	"?property dul:hasDataValue ?propertyValue " +
 	"}";
 
     // subscription
@@ -280,7 +287,10 @@ function subscribeToDevice(deviceId){
 		document.getElementById("devicePropertiesSpuid").innerHTML = subid;
 
 		// store the subid
-		devicePropertiesSpuid = subid
+		devicePropertiesSpuid = subid;
+
+		// store the device
+		activeDevice = deviceId;
 		
 		// save the websocket
 		devicePropertiesSub = ws2;
@@ -329,12 +339,15 @@ function subscribeToDevice(deviceId){
 	document.getElementById("devicePropertiesSpuid").innerHTML = "";
 	$("#" + deviceId.split("#")[1] + "Btn").removeClass("btn-success");
 
+	// forget the active device
+	activeDevice = null;
+	
     };
 
     // prepare the subscription to events
-    eventsSubText = "PREFIX wot:<http://www.arces.unibo.it/wot#> " +
+    eventsSubText = "PREFIX wot:<http://wot.arces.unibo.it/sepa#> " +
     	"PREFIX rdf:<http://www.w3.org/1999/02/22-rdf-syntax-ns#> " +
-    	"PREFIX td:<http://w3c.github.io/wot/w3c-wot-td-ontology.owl#> " +
+    	"PREFIX td:<http://www.w3.org/ns/td#> " +
     	"PREFIX dul:<http://www.ontologydesignpatterns.org/ont/dul/DUL.owl#> " +
     	"SELECT ?event ?eventName ?instance ?timestamp ?value " +
     	"WHERE { " +
@@ -441,9 +454,9 @@ function subscribeToDevice(deviceId){
     };
 
     // prepare the subscription to actions
-    actionsSubText = "PREFIX wot:<http://www.arces.unibo.it/wot#> " +
+    actionsSubText = "PREFIX wot:<http://wot.arces.unibo.it/wot#> " +
 	"PREFIX rdf:<http://www.w3.org/1999/02/22-rdf-syntax-ns#> " +
-	"PREFIX td:<http://w3c.github.io/wot/w3c-wot-td-ontology.owl#> " +
+	"PREFIX td:<http://www.w3.org/ns/td#> " +
 	"PREFIX dul:<http://www.ontologydesignpatterns.org/ont/dul/DUL.owl#> " +
 	"SELECT ?action ?actionName " +
 	"WHERE { " +
@@ -505,8 +518,12 @@ function subscribeToDevice(deviceId){
 			row.id = aUri;
 			var f1 = row.insertCell(0);
 			var f2 = row.insertCell(1);
+			var f3 = row.insertCell(2);
+			var f4 = row.insertCell(3);
 			f1.innerHTML = aUri;
 			f2.innerHTML = aName;
+			f3.innerHTML = '<input type="text" class="form-control" aria-describedby="basic-addon1" id="input_' + aUri.split("#")[1] + '">';
+			f4.innerHTML = "<button action='button' class='btn btn-primary btn-sm' onclick='javascript:invokeAction(" + '"' + aUri + '"' + ");'><span class='glyphicon glyphicon-trash' aria-hidden='true''>&nbsp;</span>Invoke</button>";
 		    }
 		}
 	    }
@@ -528,13 +545,15 @@ function subscribeToDevice(deviceId){
    
 };
 
-function unsubscribe(){
+function unsubscribe(req){
 
-    // close subscription to devices
-    if (deviceListSub !== null){
-	deviceListSub.close();
-	deviceListSub = null;
-    };
+    if (req === "all"){	
+	// close subscription to devices
+	if (deviceListSub !== null){
+	    deviceListSub.close();
+	    deviceListSub = null;
+	};
+    }
 
     // close subscription to properties
     if (devicePropertiesSub !== null){
@@ -556,33 +575,140 @@ function unsubscribe(){
     
 };
 
+
+//////////////////////////////////////////////
+//
+// Functions to clear the interface
+//
+//////////////////////////////////////////////
+
 function clearData(){
 
     // unsubscribe
-    unsubscribe();
+    unsubscribe("all");
 
-    // clear previous data in the properties table
-    var table = document.getElementById("devicePropTable");
+    // empty tables
+    emptyTables("all");
+
+    // empty panels
+    emptyPanelHeadFoot("all");
+    
+};
+
+function emptyTables(req){
+
+    if (req==="all"){
+	table = document.getElementById("deviceTable");
+	while(table.rows.length > 1) {
+	    table.deleteRow(-1);
+	};	
+    }
+    
+    table = document.getElementById("deviceActionsTable");
+    while(table.rows.length > 1) {
+	table.deleteRow(-1);
+    };
+    
+    table = document.getElementById("deviceEventsTable");
+    while(table.rows.length > 1) {
+	table.deleteRow(-1);
+    };
+    
+    table = document.getElementById("devicePropTable");
     while(table.rows.length > 1) {
 	table.deleteRow(-1);
     };
 
-    // clear previous data in the events table
-    var table = document.getElementById("deviceEventsTable");
-    while(table.rows.length > 1) {
-	table.deleteRow(-1);
-    };
+}
 
-    // clear previous data in the main table
-    var table = document.getElementById("deviceTable");
-    while(table.rows.length > 1) {
-	table.deleteRow(-1);
-    };
+function emptyPanelHeadFoot(req){
 
-    // clear the panel heading for device properties and events
+    // main panel
+    if (req === "all"){
+	$("#devicesPanel").removeClass("panel-success");
+	document.getElementById("spuid").innerHTML = "";
+    }
+
+    // clear actions panel
+    $("#deviceActionsPanel").removeClass("panel-success");
+    document.getElementById("deviceActionsSpuid").innerHTML = "";
+    
+    // clear events panel
+    $("#deviceEventsPanel").removeClass("panel-success");
+    document.getElementById("deviceEventsSpuid").innerHTML = "";
+    
+    // clear props panel
+    $("#devicePropPanel").removeClass("panel-success");
+    document.getElementById("devicePropertiesSpuid").innerHTML = "";
+
+    // clear the device name from every panel
     deviceNameSections = document.getElementsByClassName("deviceName");
     for (d in deviceNameSections){
 	deviceNameSections[d].innerHTML = "";
     };
     
-};
+}
+
+
+function invokeAction(actionId){
+
+    // read the URI to send SPARQL update
+    updateURI = document.getElementById("updateURI").value;
+
+    // read the thing ID
+    thingId = activeDevice;
+
+    // read the input
+    actionInputField = "input_" + actionId.split("#")[1];
+    actionInput = document.getElementById(actionInputField).value;
+
+    // build the sparql update
+    su = "PREFIX wot:<http://wot.arces.unibo.it/sepa#> " +
+	"PREFIX rdf:<http://www.w3.org/1999/02/22-rdf-syntax-ns#> " +
+	"PREFIX dul:<http://www.ontologydesignpatterns.org/ont/dul/DUL.owl#> " + 
+	"PREFIX td:<http://www.w3.org/ns/td#> "+
+	"DELETE { <" + actionId + "> wot:hasInstance ?oldInstance . " +
+	"?oldInstance rdf:type wot:ActionInstance . " +
+	"?oldInstance wot:hasTimeStamp ?aOldTimeStamp . " +
+	"?oldInstance td:hasInput ?oldInput . " +
+	"?oldInput dul:hasDataValue ?oldValue } " +
+	"INSERT { <" + actionId + "> wot:hasInstance ?newInstance . " +
+	"?newInstance rdf:type wot:ActionInstance . " +
+	"?newInstance wot:hasTimeStamp ?time . " +
+	"?newInstance td:hasInput ?newInput . " +
+	"?newInput dul:hasDataValue '" + actionInput + "' } " +
+	"WHERE { <" + actionId + "> rdf:type td:Action . " +
+	"<" + thingId + "> td:hasAction ?action . " +
+	"<" + thingId + "> wot:isDiscoverable 'true' . " +
+	"BIND(now() AS ?time) . " +
+	"BIND(IRI(concat('http://wot.arces.unibo.it/sepa#Action_',STRUUID())) AS ?newInstance) . " +
+	"BIND(IRI(concat('http://wot.arces.unibo.it/sepa#ActionInput_',STRUUID())) AS ?newInput) . " +
+	"OPTIONAL{ <" + actionId + "> wot:hasInstance ?oldInstance. " +
+	"?oldInstance rdf:type wot:ActionInstance. " +
+	"?oldInstance wot:hasTimeStamp ?aOldTimeStamp . " +
+	"?oldInstance td:hasInput ?oldInput . " +
+	"?oldInput dul:hasDataValue ?oldValue}}";
+    console.log(su);
+    
+    // send the sparql update
+    var req = $.ajax({
+	url: updateURI,
+	crossOrigin: true,
+	method: 'POST',
+	contentType: "application/sparql-update",
+	data: su,	
+	error: function(event){
+	    d = new Date();
+	    ts = d.toLocaleFormat("%y/%m/%d %H:%M:%S");
+	    console.log("[DEBUG] Connection failed!");
+	    return false;
+	},
+	success: function(data){
+	    d = new Date();
+	    ts = d.toLocaleFormat("%y/%m/%d %H:%M:%S");
+	}
+    });
+    
+    // eventually wait/subscribe for results
+    
+}

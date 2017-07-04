@@ -59,6 +59,11 @@
       <span class="input-group-addon" id="subscribeURIlabel">Subscribe URI</span>
     </div>
     <br>
+    <div class="input-group">
+      <input type="text" class="form-control" placeholder="http://192.168.1.100:8000/update" aria-describedby="basic-addon1" id="updateURI">
+      <span class="input-group-addon" id="updateURIlabel">Update URI</span>
+    </div>
+    <br>
     <div class="btn-toolbar" role="toolbar" aria-label="Button toolbar">
       <div class="btn-group" role="group" aria-label="Basic example">
 	<button type="button" class="btn btn-secondary" onclick="javascript:subscribeToDevices('things');" id="sub1button">Things</button>
@@ -119,7 +124,7 @@
 	Actions of WoT Device <div class="deviceName"></div>
       </div>
       <table class="table" id="deviceActionsTable">
-	<tr><th>ID</th><th>Name</th></tr>
+	<tr><th>ID</th><th>Name</th><th>Input</th><th>Invoke</th></tr>
       </table>
       <div class="panel-footer" id="deviceActionsSpuid"></div>
     </div>
