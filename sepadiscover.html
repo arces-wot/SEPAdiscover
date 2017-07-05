@@ -1,21 +1,19 @@
 <!DOCTYPE html>
 <html lang="en">
   <head>
-    <meta charset="utf-8">
-    <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta charset="utf-8"/>
+    <meta http-equiv="X-UA-Compatible" content="IE=edge"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1"/>
     <!-- The above 3 meta tags *must* come first in the head; any other head content must come *after* these tags -->
-    <meta name="description" content="">
-    <meta name="author" content="">
-    <link rel="icon" href="../../favicon.ico">
-
+    <meta name="description" content=""/>
+    <meta name="author" content=""/>
     <title>SEPA Discovery Tool v0.1</title>
 
     <!-- jquery -->
     <script src="jquery-3.2.1/jquery-3.2.1.min.js"></script>
     
     <!-- Latest compiled and minified CSS -->
-    <link rel="stylesheet" href="bootstrap-3.3.7-dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="bootstrap-3.3.7-dist/css/bootstrap.min.css"/>
     
     <!-- Latest compiled and minified JavaScript -->
     <script src="bootstrap-3.3.7-dist/js/bootstrap.min.js"></script>
@@ -55,15 +53,15 @@
       </div>
 
     <div class="input-group">
-      <input type="text" class="form-control" placeholder="ws://192.168.1.100:9000/subscribe" aria-describedby="basic-addon1" id="subscribeURI">
+      <input type="text" class="form-control" placeholder="ws://192.168.1.100:9000/subscribe" aria-describedby="basic-addon1" id="subscribeURI"/>
       <span class="input-group-addon" id="subscribeURIlabel">Subscribe URI</span>
     </div>
-    <br>
+    <br/>
     <div class="input-group">
-      <input type="text" class="form-control" placeholder="http://192.168.1.100:8000/update" aria-describedby="basic-addon1" id="updateURI">
+      <input type="text" class="form-control" placeholder="http://192.168.1.100:8000/update" aria-describedby="basic-addon1" id="updateURI"/>
       <span class="input-group-addon" id="updateURIlabel">Update URI</span>
     </div>
-    <br>
+    <br/>
     <div class="btn-toolbar" role="toolbar" aria-label="Button toolbar">
       <div class="btn-group" role="group" aria-label="Basic example">
 	<button type="button" class="btn btn-secondary" onclick="javascript:subscribeToDevices('things');" id="sub1button">Things</button>
@@ -78,56 +76,55 @@
       </div>
     </div>
     
-    <br><br>
-    
-      <p>
+    <br/><br/>
 
-	<!-- DEVICE LIST -->
+    <!-- DEVICE LIST -->
     <div class="panel panel-default" id="devicesPanel">
       <div class="panel-heading">
-	WoT Devices
+	Things
       </div>
       <table class="table" id="deviceTable">
-	<th>Device</th><th>Name</th><th>Status</th><th></th>
+	<th>Device</th><th>Name</th><th>Status</th>
       </table>
       <div class="panel-footer" id="spuid">	
       </div>
     </div>
-    <br>
+    <br/>
 
     <!-- DEVICE PROPERTIES MONITOR -->
     <div class="panel panel-default" id="devicePropPanel">
       <div class="panel-heading">
-	Properties of WoT Device <div class="deviceName"></div>
+	Properties
       </div>
       <table class="table" id="devicePropTable">
-	<th>Property</th><th>Name</th><th>Value</th>	
+	<tr><th>Thing</th><th>Property</th><th>Name</th><th>Value</th></tr>
       </table>
       <div class="panel-footer" id="devicePropertiesSpuid"></div>
     </div>
-    <br>
+    <br/>
 
     <!-- DEVICE EVENTS MONITOR -->
     <div class="panel panel-default" id="deviceEventsPanel">
       <div class="panel-heading">
-	Events of WoT Device <div class="deviceName"></div>
-      </div>
+	Events</div>
       <table class="table" id="deviceEventsTable">
-	<th>Event</th><th>Name</th><th>Instance</th><th>Timestamp</th><th>Value</th>	
+	<tr><th>Thing</th><th>Event</th><th>Name</th><th>Timestamp</th><th>Value</th></tr>
       </table>
       <div class="panel-footer" id="deviceEventsSpuid"></div>
     </div>
-
+    <br/>
+    
     <!-- DEVICE ACTIONS -->
     <div class="panel panel-default" id="deviceActionsPanel">
       <div class="panel-heading">
-	Actions of WoT Device <div class="deviceName"></div>
+	Actions
       </div>
       <table class="table" id="deviceActionsTable">
-	<tr><th>ID</th><th>Name</th><th>Input</th><th>Invoke</th></tr>
+	<tr><th>Thing</th><th>Action</th><th>Name</th><th>Input</th><th>Invoke</th></tr>
       </table>
       <div class="panel-footer" id="deviceActionsSpuid"></div>
     </div>
+    <br/>
 
     </div> <!-- end of container -->
     

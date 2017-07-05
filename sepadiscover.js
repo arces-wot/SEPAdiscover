@@ -9,21 +9,113 @@ var deviceActionsSpuid = null;
 var devices = [];
 var activeDevice = null;
 
+// namespace
+wot = "http://wot.arces.unibo.it/sepa#";
+
+subText = {};
+subText["things"] = "PREFIX wot:<http://wot.arces.unibo.it/sepa#> " +
+    "PREFIX rdf:<http://www.w3.org/1999/02/22-rdf-syntax-ns#> " +
+    "PREFIX td:<http://www.w3.org/ns/td#> "+
+    "SELECT ?thingUri ?thingName ?thingStatus " +
+    "WHERE { " +
+    "?thingUri rdf:type td:Thing . " +
+    "?thingUri td:hasName ?thingName . " +
+    "?thingUri wot:isDiscoverable ?thingStatus " +
+    "}";
+
+subText["sensors"] = "PREFIX wot:<http://wot.arces.unibo.it/sepa#> " +
+    "PREFIX rdf:<http://www.w3.org/1999/02/22-rdf-syntax-ns#> " +
+    "PREFIX td:<http://www.w3.org/ns/td#> "+
+    "SELECT ?thingUri ?thingName ?thingStatus " +
+    "WHERE { " +
+    "?thingUri rdf:type td:Thing . " +
+    "?thingUri rdf:type td:Sensor . " +
+    "?thingUri td:hasName ?thingName . " +
+    "?thingUri wot:isDiscoverable ?thingStatus " +
+    "}";
+
+subText["actuators"] = "PREFIX wot:<http://wot.arces.unibo.it/sepa#> " +
+    "PREFIX rdf:<http://www.w3.org/1999/02/22-rdf-syntax-ns#> " +
+    "PREFIX td:<http://www.w3.org/ns/td#> "+
+    "SELECT ?thingUri ?thingName ?thingStatus " +
+    "WHERE { " +
+    "?thingUri rdf:type td:Thing . " +
+    "?thingUri rdf:type td:Actuator . " +
+    "?thingUri td:hasName ?thingName . " +
+    "?thingUri wot:isDiscoverable ?thingStatus " +
+    "}";
+
+subText["thingsProperties"] = "PREFIX wot:<http://wot.arces.unibo.it/wot#> " +
+    "PREFIX rdf:<http://www.w3.org/1999/02/22-rdf-syntax-ns#> " +
+    "PREFIX td:<http://www.w3.org/ns/td#> " +
+    "PREFIX dul:<http://www.ontologydesignpatterns.org/ont/dul/DUL.owl#> " +
+    "SELECT ?thing ?property ?propertyName ?propertyValue " +
+    "WHERE { " +
+    "?thing td:hasProperty ?property . " +
+    "?property td:hasName ?propertyName . " +
+    "?property td:hasValueType ?propertyValueType . " +	
+    "?property dul:hasDataValue ?propertyValue " +
+    "}";
+
+subText["thingsActions"] = "PREFIX wot:<http://wot.arces.unibo.it/wot#> " +
+    "PREFIX rdf:<http://www.w3.org/1999/02/22-rdf-syntax-ns#> " +
+    "PREFIX td:<http://www.w3.org/ns/td#> " +
+    "PREFIX dul:<http://www.ontologydesignpatterns.org/ont/dul/DUL.owl#> " +
+    "SELECT ?thing ?action ?actionName " +
+    "WHERE { " +
+    "?thing td:hasAction ?action . " +
+    "?action td:hasName ?actionName " +
+    "}";
+
+
+subText["thingsEvents"] = "PREFIX wot:<http://wot.arces.unibo.it/sepa#> " +
+    "PREFIX rdf:<http://www.w3.org/1999/02/22-rdf-syntax-ns#> " +
+    "PREFIX td:<http://www.w3.org/ns/td#> " +
+    "PREFIX dul:<http://www.ontologydesignpatterns.org/ont/dul/DUL.owl#> " +
+    "SELECT ?thing ?event ?eventName ?instance ?timestamp ?value " +
+    "WHERE { " +
+    "?thing td:hasEvent ?event . " +
+    "?event td:hasName ?eventName . " +
+    "?event wot:hasInstance ?instance . " +
+    "?instance wot:hasTimeStamp ?timestamp . " +
+    "OPTIONAL { ?instance td:hasOutput ?output ." +
+    "?output dul:hasDataValue ?value }" +
+    "}";
+
+
 function init(){
+
+    // reset panels colours
     $("#devicesPanel").removeClass("panel-success");
     $("#devicesEventsPanel").removeClass("panel-success");
-    $("#devicesPropPanel").removeClass("panel-success");
+    $("#devicesPropPanel").removeClass("panel-success");    
+    $("#devicesActionsPanel").removeClass("panel-success");
+
+    // reset buttons colours
     $("#sub1button").removeClass("btn-success");
     $("#sub2button").removeClass("btn-success");
     $("#sub3button").removeClass("btn-success");
+
+    // reset buttons colours
     $("#sub1button").removeClass("disabled");
     $("#sub2button").removeClass("disabled");
     $("#sub3button").removeClass("disabled");
+
+    // re-enable subscribe buttons
     $("#sub1button").prop("disabled", false);
     $("#sub2button").prop("disabled", false);
     $("#sub3button").prop("disabled", false);
-    $("#subscribeURI").prop("disabled", false);    
+
+    // re-enable subscribe uri bar
+    $("#subscribeURI").prop("disabled", false);
+
+    // clear the areas for subscription ids
+    document.getElementById("spuid").innerHTML = "";
+    document.getElementById("devicePropertiesSpuid").innerHTML = "";
+    document.getElementById("deviceEventsSpuid").innerHTML = "";
+    document.getElementById("deviceActionsSpuid").innerHTML = "";
 };
+
 
 function subscribeToDevices(subType){
 
@@ -36,6 +128,12 @@ function subscribeToDevices(subType){
     // read form data
     subscUrl = document.getElementById("subscribeURI").value;
 
+    ///////////////////////////////////////////////////
+    //
+    // First subscription: things
+    //
+    ///////////////////////////////////////////////////
+    
     // subscription
     
     // 1 - open connection
@@ -44,45 +142,12 @@ function subscribeToDevices(subType){
     // 2 - send subscription
     ws.onopen = function(){
 
-	wsText = "";
 	console.log(subType);
-	if (subType === "things"){
-	    wsText = "PREFIX wot:<http://wot.arces.unibo.it/sepa#> " +
-		"PREFIX rdf:<http://www.w3.org/1999/02/22-rdf-syntax-ns#> " +
-		"PREFIX td:<http://www.w3.org/ns/td#> "+
-		"SELECT ?thingUri ?thingName ?thingStatus " +
-		"WHERE { " +
-		"?thingUri rdf:type td:Thing . " +
-		"?thingUri td:hasName ?thingName . " +
-		"?thingUri wot:isDiscoverable ?thingStatus " +
-		"}";
-	} else if (subType === "sensors"){
-	    wsText = "PREFIX wot:<http://wot.arces.unibo.it/sepa#> " +
-		"PREFIX rdf:<http://www.w3.org/1999/02/22-rdf-syntax-ns#> " +
-		"PREFIX td:<http://www.w3.org/ns/td#> "+
-		"SELECT ?thingUri ?thingName ?thingStatus " +
-		"WHERE { " +
-		"?thingUri rdf:type td:Thing . " +
-		"?thingUri rdf:type td:Sensor . " +
-		"?thingUri td:hasName ?thingName . " +
-		"?thingUri wot:isDiscoverable ?thingStatus " +
-		"}";
-	} else if (subType === "actuators"){
-	    wsText = "PREFIX wot:<http://wot.arces.unibo.it/wot#> " +
-		"PREFIX rdf:<http://www.w3.org/1999/02/22-rdf-syntax-ns#> " +
-		"PREFIX td:<http://www.w3.org/ns/td#> "+
-		"SELECT ?thingUri ?thingName ?thingStatus " +
-		"WHERE { " +
-		"?thingUri rdf:type td:Thing . " +
-		"?thingUri rdf:type td:Actuator . " +
-		"?thingUri td:hasName ?thingName . " +
-		"?thingUri wot:isDiscoverable ?thingStatus " +
-		"}";
-	};
+	wsText = subText[subType];
 	$("#subscribeURI").prop("disabled", true);
 	$("#devicesPanel").addClass("panel-success");
 	$("#eventsPanel").addClass("panel-success");
-	ws.send(JSON.stringify({"subscribe":wsText, "alias":"-"}));
+	ws.send(JSON.stringify({"subscribe":wsText, "alias":subType}));
 
     };
     
@@ -143,15 +208,13 @@ function subscribeToDevices(subType){
 		    var f1 = row.insertCell(0);
 		    var f2 = row.insertCell(1);
 		    var f3 = row.insertCell(2);		    
-		    f1.innerHTML = thingUri;
+		    f1.innerHTML = thingUri.replace(wot, "wot:");
 		    f2.innerHTML = thingName;
 		    if (thingStatus === "true"){
 			f3.innerHTML = '<span class="glyphicon glyphicon-ok" aria-hidden="true"></span>';
 		    } else {
 			f3.innerHTML = '<span class="glyphicon glyphicon-remove" aria-hidden="true"></span>';
-		    }
-		    var f4 = row.insertCell(3);
-		    f4.innerHTML = '<button type="button" id=\'' + htmlThingId + 'Btn\' class="btn btn-secondary" onclick="javascript:subscribeToDevice(\'' + thingUri + '\');"><span id=\'' + htmlThingStatus + '\' class="glyphicon glyphicon-search" aria-hidden="true"></span></button>';
+		    };
 		}
 		else {
 
@@ -172,8 +235,12 @@ function subscribeToDevices(subType){
 
     // 4 - handler for closed websocket
     ws.onclose = function(event){
-	document.getElementById("spuid").innerHTML = "";
+
+	// debug print
 	console.log("[DEBUG] Closing subscription to devices");
+	
+	// reset the sub id area
+	document.getElementById("spuid").innerHTML = "";
 
 	// recolour interface
 	$("#devicesPanel").removeClass("panel-success");
@@ -181,6 +248,8 @@ function subscribeToDevices(subType){
 	$("#sub1button").removeClass("btn-success");
 	$("#sub2button").removeClass("btn-success");
 	$("#sub3button").removeClass("btn-success");
+
+	// re-enable disabled fields
 	$("#sub1button").removeClass("disabled");
 	$("#sub2button").removeClass("disabled");
 	$("#sub3button").removeClass("disabled");
@@ -190,81 +259,20 @@ function subscribeToDevices(subType){
 	$("#subscribeURI").prop("disabled", false);
 	
     }; 
-    
-};
 
-function subscribeToDevice(deviceId){
+    ///////////////////////////////////////////////////
+    //
+    // Second subscription: things properties
+    //
+    ///////////////////////////////////////////////////
 
-    // clear previously opened subscriptions
-    unsubscribe();
-
-    // clear tables
-    emptyTables();
-    
-    // modify the panel headings
-    deviceNameSections = document.getElementsByClassName("deviceName");
-    for (d in deviceNameSections){
-	deviceNameSections[d].innerHTML = deviceId;
-    };
-    
-    // get the related button and colour it
-    $("#" + deviceId.split("#")[1] + "Btn").addClass("btn-success");
-    
-    // close open subscriptions for properties
-    if (devicePropertiesSub !== null){
-	console.log("[DEBUG] Closing previous subscription to properties");
-	devicePropertiesSub.close();
-    };
-
-    // close open subscriptions for events
-    if (deviceEventsSub !== null){
-	console.log("[DEBUG] Closing previous subscription to events");
-	deviceEventsSub.close();
-    };
-
-    // clear previous data in properties table
-    var table = document.getElementById("devicePropTable");
-    while(table.rows.length > 1) {
-	table.deleteRow(-1);
-    }
-
-    // clear previous data in events table
-    var table = document.getElementById("deviceEventsTable");
-    while(table.rows.length > 1) {
-	table.deleteRow(-1);
-    }
-
-    // change the colour of the panel
-    $("#devicePropPanel").removeClass("panel-success");
-    $("#devicePropPanel").addClass("panel-success");
-    $("#deviceEventsPanel").removeClass("panel-success");
-    $("#deviceEventsPanel").addClass("panel-success");
-    $("#deviceActionsPanel").removeClass("panel-success");
-    $("#deviceActionsPanel").addClass("panel-success");
-    
-    // prepare the subscription to properties
-    subscUrl = document.getElementById("subscribeURI").value;
-    propertiesSubText = "PREFIX wot:<http://wot.arces.unibo.it/wot#> " +
-	"PREFIX rdf:<http://www.w3.org/1999/02/22-rdf-syntax-ns#> " +
-	"PREFIX td:<http://www.w3.org/ns/td#> " +
-	"PREFIX dul:<http://www.ontologydesignpatterns.org/ont/dul/DUL.owl#> " +
-	"SELECT ?property ?propertyName ?propertyValue " +
-	"WHERE { " +
-	"<" + deviceId + "> td:hasProperty ?property . " +
-	"?property td:hasName ?propertyName . " +
-	"?property td:hasValueType ?propertyValueType . " +	
-	"?property dul:hasDataValue ?propertyValue " +
-	"}";
-
-    // subscription
-    
     // 1 - open connection
     console.log("[DEBUG] Subscribing to device properties");
     var ws2 = new WebSocket(subscUrl);
     
     // 2 - send subscription
     ws2.onopen = function(){
-	ws2.send(JSON.stringify({"subscribe":propertiesSubText, "alias":"properties"}));
+	ws2.send(JSON.stringify({"subscribe":subText["thingsProperties"], "alias":"properties"}));
     };
     
     // 3 - handler for received messages
@@ -289,11 +297,12 @@ function subscribeToDevice(deviceId){
 		// store the subid
 		devicePropertiesSpuid = subid;
 
-		// store the device
-		activeDevice = deviceId;
-		
-		// save the websocket
+		// store the websocket
 		devicePropertiesSub = ws2;
+
+		// colour the panel
+		$("#devicePropPanel").addClass("panel-success");
+		
 	    };	    
 	    
 	} else if (msg["results"] !== undefined){
@@ -304,6 +313,7 @@ function subscribeToDevice(deviceId){
 		for (var i in msg["results"]["addedresults"]["bindings"]){
 
 		    // iterate over columns
+		    tUri = msg["results"]["addedresults"]["bindings"][i]["thing"]["value"];
 		    pUri = msg["results"]["addedresults"]["bindings"][i]["property"]["value"];
 		    pName = msg["results"]["addedresults"]["bindings"][i]["propertyName"]["value"];
 		    pValue = msg["results"]["addedresults"]["bindings"][i]["propertyValue"]["value"];
@@ -315,10 +325,12 @@ function subscribeToDevice(deviceId){
 			var f1 = row.insertCell(0);
 			var f2 = row.insertCell(1);
 			var f3 = row.insertCell(2);
-			f3.id = pUri.split("#")[1] + "_value";
-			f1.innerHTML = pUri;
-			f2.innerHTML = pName;
-			f3.innerHTML = pValue;
+			var f4 = row.insertCell(3);
+			f4.id = pUri.split("#")[1] + "_value";
+			f1.innerHTML = tUri.replace(wot, "wot:");
+			f2.innerHTML = pUri.replace(wot, "wot:");
+			f3.innerHTML = pName;
+			f4.innerHTML = pValue;
 		    } else {
 			f3 = document.getElementById(pUri.split("#")[1] + "_value");
 			f3.innerHTML = pValue;
@@ -341,23 +353,14 @@ function subscribeToDevice(deviceId){
 
 	// forget the active device
 	activeDevice = null;
-	
+
     };
 
-    // prepare the subscription to events
-    eventsSubText = "PREFIX wot:<http://wot.arces.unibo.it/sepa#> " +
-    	"PREFIX rdf:<http://www.w3.org/1999/02/22-rdf-syntax-ns#> " +
-    	"PREFIX td:<http://www.w3.org/ns/td#> " +
-    	"PREFIX dul:<http://www.ontologydesignpatterns.org/ont/dul/DUL.owl#> " +
-    	"SELECT ?event ?eventName ?instance ?timestamp ?value " +
-    	"WHERE { " +
-    	"<" + deviceId + "> td:hasEvent ?event . " +
-    	"?event td:hasName ?eventName . " +
-    	"?event wot:hasInstance ?instance . " +
-    	"?instance wot:hasTimeStamp ?timestamp . " +
-	"OPTIONAL { ?instance td:hasOutput ?output ." +
-	"?output dul:hasDataValue ?value }" +
-    	"}";
+    ///////////////////////////////////////////////////
+    //
+    // Third subscription: things events
+    //
+    ///////////////////////////////////////////////////
 
     // 1 - open connection
     var ws3 = new WebSocket(subscUrl);
@@ -365,7 +368,7 @@ function subscribeToDevice(deviceId){
     // 2 - send subscription
     console.log("[DEBUG] Subscribing to device events");
     ws3.onopen = function(){
-    	ws3.send(JSON.stringify({"subscribe":eventsSubText, "alias":"events"}));
+    	ws3.send(JSON.stringify({"subscribe":subText["thingsEvents"], "alias":"events"}));
     };
     
     // 3 - handler for received messages
@@ -389,7 +392,10 @@ function subscribeToDevice(deviceId){
 	    
     	    // save the websocket
     	    deviceEventsSub = ws3;
-    
+
+	    // colour the panel
+	    $("#deviceEventsPanel").addClass("panel-success");
+	    
     	} else if (emsg["results"] !== undefined){
 
 	    if (emsg["spuid"] === deviceEventsSpuid){
@@ -398,9 +404,9 @@ function subscribeToDevice(deviceId){
     		for (var i in emsg["results"]["addedresults"]["bindings"]){
 		    
     		    // iterate over columns
+		    tUri = emsg["results"]["addedresults"]["bindings"][i]["thing"]["value"];
     		    eUri = emsg["results"]["addedresults"]["bindings"][i]["event"]["value"];
     		    eName = emsg["results"]["addedresults"]["bindings"][i]["eventName"]["value"];
-    		    eInstance = emsg["results"]["addedresults"]["bindings"][i]["instance"]["value"];
 		    eTimestamp = emsg["results"]["addedresults"]["bindings"][i]["timestamp"]["value"];
 		    if (emsg["results"]["addedresults"]["bindings"][i]["value"] !== undefined){
 			eValue = emsg["results"]["addedresults"]["bindings"][i]["value"]["value"];
@@ -415,21 +421,18 @@ function subscribeToDevice(deviceId){
     			var f3 = row.insertCell(2);
 			var f4 = row.insertCell(3);
 			var f5 = row.insertCell(4);
-    			f3.id = eUri.split("#")[1] + "_instance";
 			f4.id = eUri.split("#")[1] + "_timestamp";
 			f5.id = eUri.split("#")[1] + "_value";
-    			f1.innerHTML = eUri;
-    			f2.innerHTML = eName;
-			f3.innerHTML = eInstance;
+			f1.innerHTML = tUri.replace(wot, "wot:");
+    			f2.innerHTML = eUri.replace(wot, "wot:");
+    			f3.innerHTML = eName;
 			f4.innerHTML = eTimestamp;
 			if (emsg["results"]["addedresults"]["bindings"][i]["value"] !== undefined){
     			    f5.innerHTML = eValue;
 			}
     		    } else {
-    			f3 = document.getElementById(eUri.split("#")[1] + "_instance");
 			f4 = document.getElementById(eUri.split("#")[1] + "_timestamp");
 			f5 = document.getElementById(eUri.split("#")[1] + "_value");
-			f3.innerHTML = eInstance;
 			f4.innerHTML = eTimestamp;
 			if (emsg["results"]["addedresults"]["bindings"][i]["value"] !== undefined){
     			    f5.innerHTML = eValue;
@@ -449,22 +452,14 @@ function subscribeToDevice(deviceId){
     	// restore the interface
     	$("#deviceEventsPanel").removeClass("panel-success");
     	document.getElementById("deviceEventsSpuid").innerHTML = "";
-    	$("#" + deviceId.split("#")[1] + "Btn").removeClass("btn-success");
 
     };
 
-    // prepare the subscription to actions
-    actionsSubText = "PREFIX wot:<http://wot.arces.unibo.it/wot#> " +
-	"PREFIX rdf:<http://www.w3.org/1999/02/22-rdf-syntax-ns#> " +
-	"PREFIX td:<http://www.w3.org/ns/td#> " +
-	"PREFIX dul:<http://www.ontologydesignpatterns.org/ont/dul/DUL.owl#> " +
-	"SELECT ?action ?actionName " +
-	"WHERE { " +
-	"<" + deviceId + "> td:hasAction ?action . " +
-	"?action td:hasName ?actionName " +
-	"}";
-
-    // subscription
+    ///////////////////////////////////////////
+    //
+    // fourth subscription: actions
+    //
+    ///////////////////////////////////////////
     
     // 1 - open connection
     console.log("[DEBUG] Subscribing to device actions");
@@ -472,7 +467,7 @@ function subscribeToDevice(deviceId){
     
     // 2 - send subscription
     ws4.onopen = function(){
-	ws4.send(JSON.stringify({"subscribe":actionsSubText, "alias":"actions"}));
+	ws4.send(JSON.stringify({"subscribe":subText["thingsActions"], "alias":"actions"}));
     };
     
     // 3 - handler for received messages
@@ -496,9 +491,12 @@ function subscribeToDevice(deviceId){
 
 		// store the subid
 		deviceActionsSpuid = subid
-		
+
 		// save the websocket
-		deviceActionsSub = ws3;
+		deviceActionsSub = ws4;
+
+		// colour the panel
+		$("#deviceActionsPanel").addClass("panel-success");		
 	    };	    
 	    
 	} else if (msg["results"] !== undefined){
@@ -509,6 +507,7 @@ function subscribeToDevice(deviceId){
 		for (var i in msg["results"]["addedresults"]["bindings"]){
 
 		    // iterate over columns
+		    tUri = msg["results"]["addedresults"]["bindings"][i]["thing"]["value"];		   
 		    aUri = msg["results"]["addedresults"]["bindings"][i]["action"]["value"];
 		    aName = msg["results"]["addedresults"]["bindings"][i]["actionName"]["value"];
 		    var table = document.getElementById("deviceActionsTable");
@@ -520,10 +519,13 @@ function subscribeToDevice(deviceId){
 			var f2 = row.insertCell(1);
 			var f3 = row.insertCell(2);
 			var f4 = row.insertCell(3);
-			f1.innerHTML = aUri;
-			f2.innerHTML = aName;
-			f3.innerHTML = '<input type="text" class="form-control" aria-describedby="basic-addon1" id="input_' + aUri.split("#")[1] + '">';
-			f4.innerHTML = "<button action='button' class='btn btn-primary btn-sm' onclick='javascript:invokeAction(" + '"' + aUri + '"' + ");'><span class='glyphicon glyphicon-trash' aria-hidden='true''>&nbsp;</span>Invoke</button>";
+			var f5 = row.insertCell(4);
+			f1.innerHTML = tUri.replace(wot, "wot:");
+			f2.innerHTML = aUri.replace(wot, "wot:");
+			f3.innerHTML = aName;
+			f4id = "input_" + aUri.split("#")[1];
+			f4.innerHTML = '<input type="text" class="form-control" aria-describedby="basic-addon1" id=' + f4id + ' />';
+			f5.innerHTML = "<button action='button' class='btn btn-primary btn-sm' onclick='javascript:invokeAction(" + '"' + tUri + '"' + ","  + '"' + aUri + '"' + ");'><span class='glyphicon glyphicon-trash' aria-hidden='true'>&nbsp;</span>Invoke</button>";
 		    }
 		}
 	    }
@@ -542,18 +544,18 @@ function subscribeToDevice(deviceId){
 	$("#" + deviceId.split("#")[1] + "Btn").removeClass("btn-success");
 
     };
-   
+
+    
 };
 
-function unsubscribe(req){
 
-    if (req === "all"){	
-	// close subscription to devices
-	if (deviceListSub !== null){
-	    deviceListSub.close();
-	    deviceListSub = null;
-	};
-    }
+function unsubscribe(){
+
+    // close subscription to devices
+    if (deviceListSub !== null){
+	deviceListSub.close();
+	deviceListSub = null;
+    };
 
     // close subscription to properties
     if (devicePropertiesSub !== null){
@@ -650,8 +652,12 @@ function emptyPanelHeadFoot(req){
 }
 
 
-function invokeAction(actionId){
+function invokeAction(thingId, actionId){
 
+    console.log("INVOKE");
+    console.log(thingId);
+    console.log(actionId);
+    
     // read the URI to send SPARQL update
     updateURI = document.getElementById("updateURI").value;
 
