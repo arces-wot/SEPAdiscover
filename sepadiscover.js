@@ -426,12 +426,12 @@ function subscribeToDevices(subType){
 
     	    if (emsg["spuid"] === deviceEventsSpuid){
 
-		// iterate over rows of the removed results
-		for (var i in emsg["results"]["removedresults"]["bindings"]){
-		    if (document.getElementById(eUri.split("#")[1] + tUri.split("#")[1])){
-			document.getElementById(eUri.split("#")[1] + tUri.split("#")[1]).remove();
-		    }
-		};
+		// // iterate over rows of the removed results
+		// for (var i in emsg["results"]["removedresults"]["bindings"]){
+		//     if (document.getElementById(eUri.split("#")[1] + tUri.split("#")[1])){
+		// 	document.getElementById(eUri.split("#")[1] + tUri.split("#")[1]).remove();
+		//     }
+		// };
 		
     		// iterate over rows of the results
     		for (var i in emsg["results"]["addedresults"]["bindings"]){
@@ -444,25 +444,35 @@ function subscribeToDevices(subType){
     			eValue = emsg["results"]["addedresults"]["bindings"][i]["value"]["value"];
     		    }
     		    var table = document.getElementById("deviceEventsTable");
-    		    var row = table.insertRow(-1);
-    		    row.id = eUri.split("#")[1] + tUri.split("#")[1];
-    		    var f1 = row.insertCell(0);
-    		    var f2 = row.insertCell(1);
-    		    var f3 = row.insertCell(2);
-    		    var f4 = row.insertCell(3);
-    		    f3.id = eUri.split("#")[1] + tUri.split("#")[1] + "_timestamp";
-    		    f4.id = eUri.split("#")[1] + tUri.split("#")[1] + "_value";
-    		    f1.innerHTML = tUri.replace(wot, "wot:");
-    		    f2.innerHTML = eUri.replace(wot, "wot:");
-    		    f3.innerHTML = eTimestamp;
-    		    if (emsg["results"]["addedresults"]["bindings"][i]["value"] !== undefined){
-    			f4.innerHTML = eValue;
-    		    }
+		    if (!document.getElementById(eUri.split("#")[1] + tUri.split("#")[1])){
+    			var row = table.insertRow(-1);
+    			row.id = eUri.split("#")[1] + tUri.split("#")[1];
+    			var f1 = row.insertCell(0);
+    			var f2 = row.insertCell(1);
+    			var f3 = row.insertCell(2);
+    			var f4 = row.insertCell(3);
+    			f3.id = eUri.split("#")[1] + tUri.split("#")[1] + "_timestamp";
+    			f4.id = eUri.split("#")[1] + tUri.split("#")[1] + "_value";
+    			f1.innerHTML = tUri.replace(wot, "wot:");
+    			f2.innerHTML = eUri.replace(wot, "wot:");
+    			f3.innerHTML = eTimestamp;
+    			if (emsg["results"]["addedresults"]["bindings"][i]["value"] !== undefined){
+    			    f4.innerHTML = eValue;
+    			}
+		    }
+		    else {			
+			f4 = document.getElementById(eUri.split("#")[1] + tUri.split("#")[1] + "_timestamp");
+			f5 = document.getElementById(eUri.split("#")[1] + tUri.split("#")[1] + "_value");
+			f4.innerHTML = eTimestamp;
+			if (emsg["results"]["addedresults"]["bindings"][i]["value"] !== undefined){
+    			    f5.innerHTML = eValue;
+			}			
+		    }
     		}
     	    }
     	}	
     };
-
+    
     // 4 - handler for closed websocket
     ws3.onclose = function(event){
 
